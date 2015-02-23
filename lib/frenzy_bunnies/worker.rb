@@ -41,27 +41,27 @@ module FrenzyBunnies::Worker
 
       say "#{@queue_opts[:threads] ? "#{@queue_opts[:threads]} threads " : ''}with #{@queue_opts[:prefetch]} prefetch on <#{queue_name}>."
 
-      q.subscribe(:ack => true, :blocking => false, :executor => @thread_pool) do |h, msg|
+      q.subscribe(:ack => true, :blocking => false, :executor => @thread_pool) do |metadata, payload|
         wkr = new
         begin
           Timeout::timeout(@queue_opts[:timeout_job_after]) do
-            if(wkr.work(msg))
-              h.ack
+            if(wkr.work(payload, metadata))
+              metadata.ack
               incr! :passed
             else
-              h.reject
+              metadata.reject
               incr! :failed
-              error "REJECTED", msg
+              error "REJECTED", payload
             end
           end
         rescue Timeout::Error
-          h.reject
+          metadata.reject
           incr! :failed
-          error "TIMEOUT #{@queue_opts[:timeout_job_after]}s", msg
+          error "TIMEOUT #{@queue_opts[:timeout_job_after]}s", payload
         rescue
-          h.reject
+          metadata.reject
           incr! :failed
-          error "ERROR #{$!}", msg
+          error "ERROR #{$!}", payload
         end
       end
 
