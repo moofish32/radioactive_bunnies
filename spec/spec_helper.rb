@@ -1,35 +1,12 @@
-#require 'simplecov'
-#SimpleCov.start if ENV["COVERAGE"]
-
-require 'minitest/autorun'
-
-
-
-require 'rr'
-
-
-class MiniTest::Unit::TestCase
-  include RR::Adapters::MiniTest
+require 'simplecov'
+SimpleCov.coverage_dir('target/coverage')
+SimpleCov.start  do
+  add_filter '/spec/'
 end
+ENV["RAILS_ENV"] ||= "test"
 
+Dir.glob(File.join(File.dirname(__FILE__), 'support', '*.rb')).each { |f| require f}
 
-require 'thor'
-# This is to silence the 'task' warning for the mocks.
-#
-class Thor
-  class << self
-    def create_task(meth) #:nodoc:
-      if @usage && @desc
-        base_class = @hide ? Thor::HiddenTask : Thor::Task
-        tasks[meth] = base_class.new(meth, @desc, @long_desc, @usage, method_options)
-        @usage, @desc, @long_desc, @method_options, @hide = nil
-        true
-      elsif self.all_tasks[meth] || meth == "method_missing"
-        true
-      else
-        false
-      end
-    end
-  end
+RSpec.configure do |config|
+
 end
-

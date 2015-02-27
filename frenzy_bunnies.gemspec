@@ -15,13 +15,14 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = FrenzyBunnies::VERSION
   
-  gem.add_runtime_dependency 'march_hare', '~> 2.8'
-  gem.add_runtime_dependency 'thor'
-  gem.add_runtime_dependency 'sinatra'
-  gem.add_runtime_dependency 'atomic'
-  gem.add_runtime_dependency 'json'
+  gem.add_dependency 'march_hare', '~> 2.8'
+  gem.add_dependency 'thor'
+  gem.add_dependency 'sinatra'
+  gem.add_dependency 'atomic'
+  gem.add_dependency 'json'
 
   gem.add_development_dependency 'guard-coffeescript'
-  gem.add_development_dependency 'rr'
-  gem.add_development_dependency 'guard-minitest'
+  gem.add_development_dependency 'rspec', '~>3.0'
+  gem.add_development_dependency 'guard-rspec'
+  gem.add_development_dependency 'simplecov'
 end

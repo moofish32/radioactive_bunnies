@@ -3,9 +3,31 @@ require 'frenzy_bunnies/web'
 
 class FrenzyBunnies::Context
   attr_reader :queue_factory, :logger, :env, :opts
+  OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :logger,
+          :username, :password]
 
-  def initialize(opts={})
-    @opts = opts
+  # Define class level methods that set up a configuration for this context
+  # @@config is the class instance variable to store configuration
+  # each options can be set by calling class level <option_name> value
+  @@config = {}
+  OPTS.each do |option|
+    define_singleton_method option do |value|
+      @@config[option] = value
+    end
+  end
+  class << self
+    def clear_config
+      @@config = {}
+    end
+    def configure
+      yield @@config if block_given?
+      @@config
+    end
+    alias_method :config, :configure
+  end
+
+  def initialize(opts = {})
+    @opts = @@config.merge(opts)
     @opts[:host]     ||= 'localhost'
     @opts[:heartbeat] ||= 5
     @opts[:web_host] ||= 'localhost'
