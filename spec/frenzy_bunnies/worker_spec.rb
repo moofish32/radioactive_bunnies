@@ -3,7 +3,7 @@ require 'frenzy_bunnies'
 
 class DummyWorker
   include FrenzyBunnies::Worker
-  from_queue 'new.feeds'
+  from_queue 'dummy.worker'
 
   def work(msg)
   end
@@ -33,10 +33,10 @@ describe FrenzyBunnies::Worker do
     # check stats, default configuration
     ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
     DummyWorker.start(ctx)
-    DummyWorker.jobs_stats[:failed].must_equal 0
-    DummyWorker.jobs_stats[:passed].must_equal 0
-    q = DummyWorker.queue_opts
-    q.must_equal({:prefetch=>10, :durable=>false, :timeout_job_after=>5})
+    expect(DummyWorker.jobs_stats[:failed]).to eql 0
+    expect(DummyWorker.jobs_stats[:passed]).to eql 0
+    expect(DummyWorker.queue_opts).
+      to include({:prefetch=>10, :durable=>false, :timeout_job_after=>5})
   end
 
   # it "should respond to configuration tweaks" do
