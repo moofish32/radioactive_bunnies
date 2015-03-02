@@ -6,19 +6,24 @@ class FrenzyBunnies::Context
   OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :logger,
           :username, :password, :exchange]
 
-  @@exchange_defaults = {name: 'frenzy_bunnies', type: :direct, durable: false}
+  @@exchange_defaults = {name: 'frenzy_bunnies', type: :direct, durable: false}.freeze
   # Define class level methods that set up a configuration for this context
   # @@config is the class instance variable to store configuration
   # each options can be set by calling class level <option_name> value
-  @@config = {}
+  @@config_defaults = { host: 'localhost', heartbeat: 5, web_host: 'localhost', web_port: 11333,
+    web_threadfilter: /^pool-.*/, env: 'development', logger: Logger.new(nil),
+    exchange: @@exchange_defaults
+  }.freeze
+  @@config = {}.merge(@@config_defaults)
+
   OPTS.each do |option|
     define_singleton_method option do |value|
       @@config[option] = value
     end
   end
   class << self
-    def clear_config
-      @@config = {}
+    def reset_default_config
+      @@config = {}.merge(@@config_defaults)
     end
 
     def configure
@@ -34,23 +39,19 @@ class FrenzyBunnies::Context
 
   def initialize(opts = {})
     @klasses = []
-
     @opts = @@config.merge(opts)
-    @opts[:host]     ||= 'localhost'
-    @opts[:heartbeat] ||= 5
-    @opts[:web_host] ||= 'localhost'
-    @opts[:web_port] ||= 11333
-    @opts[:web_threadfilter] ||= /^pool-.*/
-    @opts[:env] ||= 'development' unless @opts.key? :env
-    @opts[:exchange] = @@exchange_defaults.merge(opts[:exchange] || {})
-
     @env = @opts[:env]
-    @logger = @opts[:logger] || Logger.new(STDOUT)
+    @logger = @opts[:logger]
+
     params = {:host => @opts[:host], :heartbeat_interval => @opts[:heartbeat]}
     (params[:username], params[:password] = @opts[:username], @opts[:password]) if @opts[:username] && @opts[:password]
     (params[:port] = @opts[:port]) if @opts[:port]
+
     @connection = MarchHare.connect(params)
-    @connection.add_shutdown_listener(lambda { |cause|  stop(cause)})
+    @connection.on_shutdown do |conn, cause|
+      @logger.error("Disconnected: #{cause}") unless cause.initiated_by_application?
+      stop
+    end
 
     @queue_factory = FrenzyBunnies::QueueFactory.new(self)
   end
@@ -59,6 +60,11 @@ class FrenzyBunnies::Context
     @opts[:exchange]
   end
 
+  def reset_default_config
+    puts @@config_defaults
+    @opts = {}.merge(@@config_defaults)
+
+  end
   def run(*klasses)
     klasses.each{|klass| klass.start(self); @klasses << klass}
     return nil if @opts[:disable_web_stats]
@@ -67,12 +73,17 @@ class FrenzyBunnies::Context
     end
   end
 
-  def stop(cause = nil)
-    @logger.info "Shutting down workers and closing connection" unless @stop_requested
-    @stop_requested = true if cause.nil?
-    @logger.error("Disconnected: #{cause}") unless @stop_requested
+  def stop
+    return if @connection.closed?
+    @logger.info 'Shutting down workers and closing connection'
+    stop_workers
+    @connection.close
+  end
+
+  def stop_workers
+    @logger.info 'Stopping workers'
     @klasses.each{|klass| klass.stop } unless @klasses.empty?
-    @connection.close unless @connection.closed?
+    @logger.info 'Workers have been told to stop'
   end
 end
 

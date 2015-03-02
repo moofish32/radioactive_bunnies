@@ -12,7 +12,6 @@ class FrenzyBunnies::QueueFactory
 
     channel = @connection.create_channel
     channel.prefetch = prefetch
-    puts exchange_params
     exchange = channel.exchange(exchange_params[:name],
                                 type: exchange_params[:type], durable: exchange_params[:durable])
 

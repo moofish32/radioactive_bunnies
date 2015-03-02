@@ -4,16 +4,41 @@ require 'frenzy_bunnies'
 class DummyWorker
   include FrenzyBunnies::Worker
   from_queue 'dummy.worker'
+  def work(metadata, msg)
+    true
+  end
+end
 
-  def work(msg)
+class TimeoutWorker
+  include FrenzyBunnies::Worker
+  from_queue 'timeout.worker', timeout_job_after: 1
+  def work(metadata, msg)
+    while(true) do
+    end
+  end
+end
+
+class ExceptionWorker
+  include FrenzyBunnies::Worker
+  from_queue 'exception.worker'
+  def work(metadata, msg)
+    raise "I am exceptional"
+  end
+end
+
+class FailedWorker
+  include FrenzyBunnies::Worker
+  from_queue 'failed.worker'
+  def work(metadata, msg)
+    false
   end
 end
 
 class CustomWorker
   include FrenzyBunnies::Worker
-  from_queue 'new.feeds', :prefetch => 20, :durable => true, :timeout_job_after => 13, :threads => 25
-
-  def work(msg)
+  from_queue 'custom.worker', :prefetch => 20, :durable => true, :timeout_job_after => 13,
+    :threads => 25, append_env: true
+  def work(metadata, msg)
   end
 end
 
@@ -22,89 +47,63 @@ describe FrenzyBunnies::Worker do
   before(:all) do
     @conn = MarchHare.connect
     @ch = @conn.create_channel
-    @exchange = @ch.direct('publisher')
+    FrenzyBunnies::Context.reset_default_config
+    @ctx = FrenzyBunnies::Context.new(logger: Logger.new(STDOUT))
+    @ctx.run TimeoutWorker, ExceptionWorker, FailedWorker, DummyWorker, CustomWorker
+    ['failed.worker', 'timeout.worker', 'dummy.worker', 'exception.worker'].each do |r_key|
+      @ch.default_exchange.publish("hello world", routing_key: r_key)
+    end
+    sleep 2
   end
 
   after(:all) do
     @conn.close
+    @ctx.stop
   end
 
   it "should start with a clean slate" do
     # check stats, default configuration
-    ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-    DummyWorker.start(ctx)
-    expect(DummyWorker.jobs_stats[:failed]).to eql 0
-    expect(DummyWorker.jobs_stats[:passed]).to eql 0
-    expect(DummyWorker.queue_opts).
-      to include({:prefetch=>10, :durable=>false, :timeout_job_after=>5})
+    expect(CustomWorker.jobs_stats[:failed]).to eql 0
+    expect(CustomWorker.jobs_stats[:passed]).to eql 0
+    expect(CustomWorker.queue_opts).
+      to match({:prefetch => 20, :durable => true, :timeout_job_after => 13, :threads => 25,
+                append_env: true})
   end
 
-  # it "should respond to configuration tweaks" do
-  #   # check that all params are changed
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx, nil, nil, true)
-  #
-  #   CustomWorker.start(ctx)
-  #   CustomWorker.jobs_stats[:failed].must_equal 0
-  #   CustomWorker.jobs_stats[:passed].must_equal 0
-  #   q = CustomWorker.queue_opts
-  #   q.must_equal({:prefetch=>20, :durable=>true, :timeout_job_after=>13, :threads=>25})
-  # end
-  # it "should stop when asked to" do
-  #   # validate that a worker stops
-  #   # check stats, default configuration
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx, nil, nil, true)
-  #
-  #
-  #   DummyWorker.start(ctx)
-  #   DummyWorker.stop
-  # end
-  # it "should be passed a message to work on" do
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx, true, "work!")
-  #
-  #   any_instance_of(DummyWorker){ |w| mock(w).work("work!"){ true } }
-  #   DummyWorker.start(ctx)
-  # end
-  # it "should acknowledge a unit of work when worker succeeds" do
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx)
-  #
-  #   any_instance_of(DummyWorker){ |w| mock(w).work(anything){ true } }
-  #   DummyWorker.start(ctx)
-  #   DummyWorker.jobs_stats[:passed].must_equal 1
-  #   DummyWorker.jobs_stats[:failed].must_equal 0
-  # end
-  # it "should reject a unit of work when worker fails" do
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx,false)
-  #
-  #   any_instance_of(DummyWorker){ |w| mock(w).work(anything){ false } }
-  #   mock(DummyWorker).error(anything, anything){ |text, _| text.must_match(/^REJECTED/) }
-  #   DummyWorker.start(ctx)
-  #   DummyWorker.jobs_stats[:failed].must_equal 1
-  #   DummyWorker.jobs_stats[:passed].must_equal 0
-  # end
-  # it "should reject a unit of work when worker times out" do
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx,false)
-  #   DummyWorker.queue_opts[:timeout_job_after] = 1
-  #   any_instance_of(DummyWorker){ |w| mock(w).work(anything){ sleep(2) }}
-  #   mock(DummyWorker).error(anything, anything){ |text, _| text.must_match(/^TIMEOUT/) }
-  #   DummyWorker.start(ctx)
-  #   DummyWorker.jobs_stats[:failed].must_equal 1
-  #   DummyWorker.jobs_stats[:passed].must_equal 0
-  #   DummyWorker.queue_opts[:timeout_job_after] = 5
-  # end
-  # it "should reject a unit of work when worker fails exceptionally" do
-  #   ctx = FrenzyBunnies::Context.new(:logger=> Logger.new(nil))
-  #   with_test_queuefactory(ctx,false)
-  #
-  #   any_instance_of(DummyWorker){ |w| mock(w).work(anything){ throw :error } }
-  #   mock(DummyWorker).error(anything, anything){ |text, _| text.must_match(/^ERROR/) }
-  #   DummyWorker.start(ctx)
-  #   DummyWorker.jobs_stats[:failed].must_equal 1
-  #   DummyWorker.jobs_stats[:passed].must_equal 0
-  # end
+  it "should respond to configuration tweaks" do
+    # check that all params are changed
+    q = CustomWorker.queue_opts
+    q[:timeout_job_after] = 1
+    expect(CustomWorker.queue_opts).to include(timeout_job_after: 1)
+    q[:timeout_job_after] = 13
+  end
+
+  it 'includes context env if append_env: true is provided' do
+    expect(CustomWorker.queue_name).to eql 'custom.worker_development'
+  end
+
+  it "should stop when asked to" do
+    CustomWorker.stop
+    expect(CustomWorker.stopped?).to be_truthy
+  end
+
+  it "should acknowledge a unit of work when worker succeeds" do
+    expect(DummyWorker.jobs_stats[:passed]).to eql 1
+    expect(DummyWorker.jobs_stats[:failed]).to eql 0
+  end
+
+  it "does not acknowledge failed work and tracks failures" do
+    expect(FailedWorker.jobs_stats[:failed]).to eql 1
+    expect(FailedWorker.jobs_stats[:passed]).to eql 0
+  end
+
+  it "should reject a unit of work when worker times out" do
+    expect(TimeoutWorker.jobs_stats[:failed]).to eql 1
+    expect(TimeoutWorker.jobs_stats[:passed]).to eql 0
+  end
+
+  it "should reject a unit of work when worker fails exceptionally" do
+    expect(ExceptionWorker.jobs_stats[:failed]).to eql 1
+    expect(ExceptionWorker.jobs_stats[:passed]).to eql 0
+  end
 end

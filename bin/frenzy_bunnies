@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+load Gem.bin_path('frenzy_bunnies', 'frenzy_bunnies')
 require 'frenzy_bunnies'
 require 'frenzy_bunnies/cli'
 

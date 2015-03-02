@@ -14,8 +14,8 @@ module FrenzyBunnies::Worker
 
   module ClassMethods
 
-    def from_queue(q, opts={})
-      @queue_name = q
+    def from_queue(q_name, opts={})
+      @queue_name = q_name
       @queue_opts = opts
     end
 
@@ -24,8 +24,6 @@ module FrenzyBunnies::Worker
       @working_since = Time.now
 
       @logger = context.logger
-
-      queue_name = "#{@queue_name}_#{context.env}"
 
       @queue_opts[:prefetch] ||= 10
       @queue_opts[:durable] ||= false
@@ -37,15 +35,16 @@ module FrenzyBunnies::Worker
         @thread_pool = MarchHare::ThreadPools.dynamically_growing
       end
 
-      q = context.queue_factory.build_queue(queue_name, @queue_opts)
+      @queue_name = "#{@queue_name}_#{context.env}" if @queue_opts[:append_env]
+      q = context.queue_factory.build_queue(@queue_name, @queue_opts)
 
-      say "#{@queue_opts[:threads] ? "#{@queue_opts[:threads]} threads " : ''}with #{@queue_opts[:prefetch]} prefetch on <#{queue_name}>."
+      say "#{@queue_opts[:threads] ? "#{@queue_opts[:threads]} threads " : ''}with #{@queue_opts[:prefetch]} prefetch on <#{@queue_name}>."
 
       q.subscribe(:ack => true, :blocking => false, :executor => @thread_pool) do |metadata, payload|
         wkr = new
         begin
           Timeout::timeout(@queue_opts[:timeout_job_after]) do
-            if(wkr.work(payload, metadata))
+            if(wkr.work(metadata, payload))
               metadata.ack
               incr! :passed
             else
@@ -69,14 +68,23 @@ module FrenzyBunnies::Worker
     end
 
     def stop
+      return if stopped?
       say "stopping"
-      @thread_pool.shutdown_now say "pool shutdown"
-      # @s.cancel  #for some reason when the channel socket is broken, this is holding the process up and we're zombie.
+      @thread_pool.shutdown_now
       say "stopped"
+      @stopped = true
+    end
+
+    def stopped?
+      @stopped
     end
 
     def queue_opts
       @queue_opts
+    end
+
+    def queue_name
+      @queue_name
     end
 
     def jobs_stats
