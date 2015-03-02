@@ -23,7 +23,7 @@ module FrenzyBunnies::Worker
       @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
       @working_since = Time.now
 
-      @logger = context.logger
+      @logger = context.opts[:logger]
 
       @queue_opts[:prefetch] ||= 10
       @queue_opts[:durable] ||= false
@@ -35,7 +35,7 @@ module FrenzyBunnies::Worker
         @thread_pool = MarchHare::ThreadPools.dynamically_growing
       end
 
-      @queue_name = "#{@queue_name}_#{context.env}" if @queue_opts[:append_env]
+      @queue_name = "#{@queue_name}_#{context.opts[:env]}" if @queue_opts[:append_env]
       q = context.queue_factory.build_queue(@queue_name, @queue_opts)
 
       say "#{@queue_opts[:threads] ? "#{@queue_opts[:threads]} threads " : ''}with #{@queue_opts[:prefetch]} prefetch on <#{@queue_name}>."

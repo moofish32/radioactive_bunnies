@@ -2,7 +2,7 @@ require 'logger'
 require 'frenzy_bunnies/web'
 
 class FrenzyBunnies::Context
-  attr_reader :queue_factory, :logger, :env, :opts, :connection
+  attr_reader :queue_factory, :opts, :connection
   OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :logger,
           :username, :password, :exchange]
 
@@ -17,24 +17,30 @@ class FrenzyBunnies::Context
   @@config = {}.merge(@@config_defaults)
 
   OPTS.each do |option|
+    define_method option do |value|
+      @opts[option] = value
+    end
+
     define_singleton_method option do |value|
       @@config[option] = value
     end
   end
-  class << self
-    def reset_default_config
-      @@config = {}.merge(@@config_defaults)
-    end
 
-    def configure
-      yield @@config if block_given?
-      @@config
-    end
-    alias_method :config, :configure
+  def self.reset_default_config
+    @@config = {}.merge(@@config_defaults)
+  end
 
-    def exchange_defaults
-      @@exchange_defaults
-    end
+  def self.configure
+    yield @@config if block_given?
+    @@config
+  end
+
+  def self.config
+    @@config
+  end
+
+  def self.exchange_defaults
+    @@exchange_defaults
   end
 
   def initialize(opts = {})
@@ -42,35 +48,45 @@ class FrenzyBunnies::Context
     @opts = @@config.merge(opts)
     @env = @opts[:env]
     @logger = @opts[:logger]
-
-    params = {:host => @opts[:host], :heartbeat_interval => @opts[:heartbeat]}
-    (params[:username], params[:password] = @opts[:username], @opts[:password]) if @opts[:username] && @opts[:password]
-    (params[:port] = @opts[:port]) if @opts[:port]
-
-    @connection = MarchHare.connect(params)
-    @connection.on_shutdown do |conn, cause|
-      @logger.error("Disconnected: #{cause}") unless cause.initiated_by_application?
-      stop
-    end
-
-    @queue_factory = FrenzyBunnies::QueueFactory.new(self)
   end
 
   def default_exchange
     @opts[:exchange]
   end
 
-  def reset_default_config
-    puts @@config_defaults
+  def reset_to_default_config
     @opts = {}.merge(@@config_defaults)
-
   end
+
   def run(*klasses)
+    start_rabbit_connection!
     klasses.each{|klass| klass.start(self); @klasses << klass}
+    start_web_console
+  end
+
+  def start_web_console
     return nil if @opts[:disable_web_stats]
     Thread.new do
-      FrenzyBunnies::Web.run_with(@klasses, :host => @opts[:web_host], :port => @opts[:web_port], :threadfilter => @opts[:web_threadfilter], :logger => @logger)
+      FrenzyBunnies::Web.run_with(@klasses, :host => @opts[:web_host], port: @opts[:web_port],
+                                  threadfilter: @opts[:web_threadfilter], logger: @logger)
     end
+  end
+
+  def start_rabbit_connection!
+    params = rabbit_params
+    @connection = MarchHare.connect(params)
+    @queue_factory = FrenzyBunnies::QueueFactory.new(self)
+    @connection.on_shutdown do |conn, cause|
+      @logger.error("Disconnected: #{cause}") unless cause.initiated_by_application?
+      stop
+    end
+  end
+
+  def rabbit_params
+    params = {:host => @opts[:host], :heartbeat_interval => @opts[:heartbeat]}
+    (params[:username], params[:password] = @opts[:username], @opts[:password]) if @opts[:username] && @opts[:password]
+    (params[:port] = @opts[:port]) if @opts[:port]
+    params
   end
 
   def stop
