@@ -1,4 +1,5 @@
 require 'simplecov'
+require 'ruby-debug'
 SimpleCov.coverage_dir('target/coverage')
 SimpleCov.start  do
   add_filter '/spec/'

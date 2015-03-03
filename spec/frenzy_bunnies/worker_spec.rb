@@ -1,38 +1,9 @@
 require 'spec_helper'
 require 'frenzy_bunnies'
-
-class DummyWorker
-  include FrenzyBunnies::Worker
-  from_queue 'dummy.worker'
-  def work(metadata, msg)
-    true
-  end
-end
-
-class TimeoutWorker
-  include FrenzyBunnies::Worker
-  from_queue 'timeout.worker', timeout_job_after: 1
-  def work(metadata, msg)
-    while(true) do
-    end
-  end
-end
-
-class ExceptionWorker
-  include FrenzyBunnies::Worker
-  from_queue 'exception.worker'
-  def work(metadata, msg)
-    raise "I am exceptional"
-  end
-end
-
-class FailedWorker
-  include FrenzyBunnies::Worker
-  from_queue 'failed.worker'
-  def work(metadata, msg)
-    false
-  end
-end
+require 'support/workers/timeout_worker'
+require 'support/workers/exception_worker'
+require 'support/workers/dummy_worker'
+require 'support/workers/failed_worker'
 
 class CustomWorker
   include FrenzyBunnies::Worker
@@ -53,7 +24,7 @@ describe FrenzyBunnies::Worker do
     ['failed.worker', 'timeout.worker', 'dummy.worker', 'exception.worker'].each do |r_key|
       @ch.default_exchange.publish("hello world", routing_key: r_key)
     end
-    sleep 2
+    sleep 1
   end
 
   after(:all) do
@@ -76,6 +47,12 @@ describe FrenzyBunnies::Worker do
     q[:timeout_job_after] = 1
     expect(CustomWorker.queue_opts).to include(timeout_job_after: 1)
     q[:timeout_job_after] = 13
+  end
+
+  it 'informs the FrenzyBunnies::Context that a worker has been defined' do
+    class HardlyWorks; end
+    expect(FrenzyBunnies::Context).to receive(:add_worker).with(HardlyWorks)
+    class HardlyWorks; include FrenzyBunnies::Worker; end
   end
 
   it 'includes context env if append_env: true is provided' do
