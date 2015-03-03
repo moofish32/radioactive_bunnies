@@ -5,48 +5,28 @@ require 'thread_safe'
 class FrenzyBunnies::Context
   attr_reader :queue_factory, :opts, :connection, :workers
   OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :logger,
-          :username, :password, :exchange, :workers_path, :workers_subdomain]
+          :username, :password, :exchange, :workers_scope]
 
   EXCHANGE_DEFAULTS = {name: 'frenzy_bunnies', type: :direct, durable: false}.freeze
-  # Define class level methods that set up a configuration for this context
-  # @@config is the class instance variable to store configuration
-  # each options can be set by calling class level <option_name> value
   CONFIG_DEFAULTS = { host: 'localhost', heartbeat: 5, web_host: 'localhost', web_port: 11333,
     web_threadfilter: /^pool-.*/, env: 'development', logger: Logger.new(nil),
     exchange: EXCHANGE_DEFAULTS
   }.freeze
-  @@config = {}.merge(CONFIG_DEFAULTS)
+
+  @@known_workers = ThreadSafe::Hash.new
 
   OPTS.each do |option|
     define_method option do |value|
       @opts[option] = value
     end
-
-    define_singleton_method option do |value|
-      @@config[option] = value
-    end
-  end
-
-  def self.reset_default_config
-    @@config = {}.merge(CONFIG_DEFAULTS)
-  end
-
-  def self.configure
-    yield @@config if block_given?
-    @@config
-  end
-
-  def self.config
-    @@config
   end
 
   def self.add_worker(wrk_class)
-    @@known_workers ||= ThreadSafe::Hash.new
     @@known_workers[wrk_class.name] = wrk_class
   end
 
   def initialize(opts = {})
-    @opts = @@config.merge(opts)
+    @opts = CONFIG_DEFAULTS.merge(opts)
     load_workers!
     @env = @opts[:env]
     @logger = @opts[:logger]
@@ -108,9 +88,8 @@ class FrenzyBunnies::Context
   end
 
   def load_workers!
-    @workers = []
     path_klasses = classes_from_path(@opts[:workers_path])
-    select_workers!(path_klasses || [],  @opts[:workers_subdomain])
+    @workers = select_workers(path_klasses || [],  @opts[:workers_scope])
   end
 
   def classes_from_path(path)
@@ -121,13 +100,13 @@ class FrenzyBunnies::Context
     end
   end
 
-  def select_workers!(klass_names, subdomain)
+  def select_workers(klass_names, subdomain)
     return [] if (klass_names.empty? && subdomain.nil?)
     if !!subdomain
-      @workers += @@known_workers.
-        select { |klass_name, cls| klass_name.start_with? @opts[:workers_subdomain]}.values
+      @@known_workers.
+        select { |klass_name, cls| klass_name.start_with? @opts[:workers_scope]}.values
     else
-      @workers += @@known_workers.
+      @@known_workers.
         select {|klass_name, cls| klass_names.include? klass_name.split('::').last}.values
     end
   end
