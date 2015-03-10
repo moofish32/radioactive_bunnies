@@ -1,7 +1,7 @@
 require 'atomic'
-require 'frenzy_bunnies/context'
+require 'radioactive_bunnies/context'
 
-module FrenzyBunnies::Worker
+module RadioactiveBunnies::Worker
 
   def ack!
     true
@@ -12,7 +12,7 @@ module FrenzyBunnies::Worker
 
   def self.included(base)
     base.extend ClassMethods
-    FrenzyBunnies::Context.add_worker(base)
+    RadioactiveBunnies::Context.add_worker(base)
   end
 
   module ClassMethods
@@ -26,7 +26,7 @@ module FrenzyBunnies::Worker
       @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
       @working_since = Time.now
 
-      @logger = context.opts[:logger]
+      @logger = context.logger
 
       @queue_opts[:prefetch] ||= 10
       @queue_opts[:durable] ||= false

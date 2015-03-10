@@ -1,12 +1,12 @@
 require 'spec_helper'
-require 'frenzy_bunnies'
+require 'radioactive_bunnies'
 require 'support/workers/timeout_worker'
 require 'support/workers/exception_worker'
 require 'support/workers/dummy_worker'
 require 'support/workers/failed_worker'
 
 class CustomWorker
-  include FrenzyBunnies::Worker
+  include RadioactiveBunnies::Worker
   from_queue 'custom.worker', :prefetch => 20, :durable => true, :timeout_job_after => 13,
     :threads => 25, append_env: true
   def work(metadata, msg)
@@ -14,11 +14,11 @@ class CustomWorker
 end
 
 
-describe FrenzyBunnies::Worker do
+describe RadioactiveBunnies::Worker do
   before(:all) do
     @conn = MarchHare.connect
     @ch = @conn.create_channel
-    @ctx = FrenzyBunnies::Context.new(logger: Logger.new(STDOUT))
+    @ctx = RadioactiveBunnies::Context.new(logger: Logger.new(STDOUT))
     @ctx.run TimeoutWorker, ExceptionWorker, FailedWorker, DummyWorker, CustomWorker
     ['failed.worker', 'timeout.worker', 'dummy.worker', 'exception.worker'].each do |r_key|
       @ch.default_exchange.publish("hello world", routing_key: r_key)
@@ -48,10 +48,10 @@ describe FrenzyBunnies::Worker do
     q[:timeout_job_after] = 13
   end
 
-  it 'informs the FrenzyBunnies::Context that a worker has been defined' do
+  it 'informs the RadioactiveBunnies::Context that a worker has been defined' do
     class HardlyWorks; end
-    expect(FrenzyBunnies::Context).to receive(:add_worker).with(HardlyWorks)
-    class HardlyWorks; include FrenzyBunnies::Worker; end
+    expect(RadioactiveBunnies::Context).to receive(:add_worker).with(HardlyWorks)
+    class HardlyWorks; include RadioactiveBunnies::Worker; end
   end
 
   it 'includes context env if append_env: true is provided' do

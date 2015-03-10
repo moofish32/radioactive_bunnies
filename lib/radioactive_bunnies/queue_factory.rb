@@ -1,4 +1,4 @@
-class FrenzyBunnies::QueueFactory
+class RadioactiveBunnies::QueueFactory
   def initialize(context)
     @context = context
     @connection = context.connection

@@ -1,7 +1,7 @@
 require 'sinatra/base'
 require 'json'
 
-class FrenzyBunnies::Web < Sinatra::Base
+class RadioactiveBunnies::Web < Sinatra::Base
   configure do
     # disable logging
     set :public_folder, File.expand_path('web/public', File.dirname(__FILE__))
@@ -40,7 +40,7 @@ class FrenzyBunnies::Web < Sinatra::Base
 
   def self.run_with(jobs, opts={})
     set :jobs, (jobs || [])
-    set :health_collector, FrenzyBunnies::Health::Collector.new({:jvm => {:threadfilter => opts[:threadfilter]}})
+    set :health_collector, RadioactiveBunnies::Health::Collector.new({:jvm => {:threadfilter => opts[:threadfilter]}})
     @logger = opts[:logger]
     @logger.info "* running web dashboard bound to #{opts[:host]} on port #{opts[:port]}."
     Rack::Handler::WEBrick.run self, :Host => opts[:host], :Port => opts[:port],  :Logger => WEBrick::Log.new("/dev/null"), :AccessLog => [nil, nil]

@@ -1,10 +1,10 @@
-class FrenzyBunnies::Health::Collector
+class RadioactiveBunnies::Health::Collector
   def initialize(opts={})
     @providers = []
-    Dir["#{File.dirname(__FILE__)}/providers/*.rb"].each do |f| 
+    Dir["#{File.dirname(__FILE__)}/providers/*.rb"].each do |f|
       require f
       name = File.basename(f, '.*')
-      provider_klass = FrenzyBunnies::Health::Providers.const_get(camelize name)
+      provider_klass = RadioactiveBunnies::Health::Providers.const_get(camelize name)
       @providers << provider_klass.new(opts[name.to_sym])
     end
   end

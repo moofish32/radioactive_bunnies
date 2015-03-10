@@ -2,7 +2,7 @@ require 'java'
 
 java_import 'java.lang.management.ManagementFactory'
 
-class FrenzyBunnies::Health::Providers::Jvm
+class RadioactiveBunnies::Health::Providers::Jvm
   def initialize(opts)
     # init beans
     @opts = opts
@@ -37,7 +37,7 @@ class FrenzyBunnies::Health::Providers::Jvm
     end.compact
 
     ids.map{|i| @threadmx_thread_info.call(i, 10) }.compact.map {|inf| inf.stack_trace.to_a.inject([]){|a,s| a<<s.to_s }}
-    
+
     h
   end
 end
