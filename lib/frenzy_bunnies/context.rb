@@ -27,7 +27,6 @@ class FrenzyBunnies::Context
 
   def initialize(opts = {})
     @opts = CONFIG_DEFAULTS.merge(opts)
-    load_workers!
     @env = @opts[:env]
     @logger = @opts[:logger]
   end
@@ -41,8 +40,8 @@ class FrenzyBunnies::Context
   end
 
   def run(*klasses)
+    @workers = (klasses + worker_classes_for_scope).flatten
     start_rabbit_connection!
-    @workers += klasses.flatten unless klasses.empty?
     @workers.each{|klass| klass.start(self)}
     start_web_console
   end
@@ -58,6 +57,12 @@ class FrenzyBunnies::Context
     @logger.info 'Stopping workers'
     @workers.each{|klass| klass.stop } unless @workers.empty?
     @logger.info 'Workers have been told to stop'
+  end
+
+  def worker_classes_for_scope
+    worker_scope = @opts[:workers_scope]
+    return [] if worker_scope.to_s.empty?
+    @@known_workers.select{ |klass_name, cls| klass_name.start_with? worker_scope}.values
   end
 
   private
@@ -87,28 +92,5 @@ class FrenzyBunnies::Context
     params
   end
 
-  def load_workers!
-    path_klasses = classes_from_path(@opts[:workers_path])
-    @workers = select_workers(path_klasses || [],  @opts[:workers_scope])
-  end
-
-  def classes_from_path(path)
-    return [] if path.nil?
-    klass_names = Dir[File.join(File.expand_path(path), "**/*.rb")].map do |f|
-      require f
-      File.basename(f).gsub('.rb', '').split('_').map(&:capitalize).join
-    end
-  end
-
-  def select_workers(klass_names, subdomain)
-    return [] if (klass_names.empty? && subdomain.nil?)
-    if !!subdomain
-      @@known_workers.
-        select { |klass_name, cls| klass_name.start_with? @opts[:workers_scope]}.values
-    else
-      @@known_workers.
-        select {|klass_name, cls| klass_names.include? klass_name.split('::').last}.values
-    end
-  end
 end
 

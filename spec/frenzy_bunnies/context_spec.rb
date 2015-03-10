@@ -38,7 +38,7 @@ describe FrenzyBunnies::Context do
       context 'with worker_subdomain: Subdomain' do
         let(:sub_ctx) {FrenzyBunnies::Context.new(workers_scope: 'Subdomain')}
         it 'will add any workers with a class name beginning with Subdomain that have been required' do
-          expect(sub_ctx.workers).to include Subdomain::RightNameWorker
+          expect(sub_ctx.worker_classes_for_scope).to include Subdomain::RightNameWorker
         end
       end
     end
