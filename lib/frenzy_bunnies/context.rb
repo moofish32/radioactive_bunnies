@@ -9,8 +9,8 @@ class FrenzyBunnies::Context
 
   EXCHANGE_DEFAULTS = {name: 'frenzy_bunnies', type: :direct, durable: false}.freeze
   CONFIG_DEFAULTS = { host: 'localhost', heartbeat: 5, web_host: 'localhost', web_port: 11333,
-    web_threadfilter: /^pool-.*/, env: 'development', logger: Logger.new(nil),
-    exchange: EXCHANGE_DEFAULTS
+    disable_web_stats: true, web_threadfilter: /^pool-.*/, env: 'development',
+    logger: Logger.new(nil), exchange: EXCHANGE_DEFAULTS
   }.freeze
 
   @@known_workers = ThreadSafe::Hash.new
