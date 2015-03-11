@@ -1,6 +1,6 @@
-require 'frenzy_bunnies'
+require 'radioactive_bunnies'
 class DummyWorker
-  include FrenzyBunnies::Worker
+  include RadioactiveBunnies::Worker
   from_queue 'dummy.worker'
   def work(metadata, msg)
     true

@@ -1,8 +1,8 @@
 require 'logger'
-require 'frenzy_bunnies/web'
+require 'radioactive_bunnies/web'
 require 'thread_safe'
 
-class FrenzyBunnies::Context
+class RadioactiveBunnies::Context
   attr_reader :queue_factory, :opts, :connection, :workers
   OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :log_with,
           :username, :password, :exchange, :workers_scope]
@@ -75,7 +75,7 @@ class FrenzyBunnies::Context
   def start_web_console
     return nil unless @opts[:enable_web_stats]
     Thread.new do
-      FrenzyBunnies::Web.run_with(@workers, :host => @opts[:web_host], port: @opts[:web_port],
+      RadioactiveBunnies::Web.run_with(@workers, :host => @opts[:web_host], port: @opts[:web_port],
                                   threadfilter: @opts[:web_threadfilter], logger: @logger)
     end
   end
@@ -83,7 +83,7 @@ class FrenzyBunnies::Context
   def start_rabbit_connection!
     params = rabbit_params
     @connection = MarchHare.connect(params)
-    @queue_factory = FrenzyBunnies::QueueFactory.new(self)
+    @queue_factory = RadioactiveBunnies::QueueFactory.new(self)
     @connection.on_shutdown do |conn, cause|
       @logger.error("Disconnected: #{cause}") unless cause.initiated_by_application?
       stop

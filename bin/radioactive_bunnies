@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+require 'radioactive_bunnies'
+require 'radioactive_bunnies/cli'
+
+RadioactiveBunnies::CLI.start

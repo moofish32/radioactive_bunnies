@@ -1,11 +1,11 @@
 require 'spec_helper'
-require 'frenzy_bunnies'
+require 'radioactive_bunnies'
 require 'support/workers/wrong_name_worker'
 
-describe FrenzyBunnies::Context do
+describe RadioactiveBunnies::Context do
   describe 'configuration' do
-    let(:ctx) {FrenzyBunnies::Context.new}
-    FrenzyBunnies::Context::OPTS.each do |option|
+    let(:ctx) {RadioactiveBunnies::Context.new}
+    RadioactiveBunnies::Context::OPTS.each do |option|
       it "provides instance level config method #{option} <value>" do
         ctx.send(option, "TEST")
         expect(ctx.opts).to include({option => "TEST"})
@@ -36,7 +36,7 @@ describe FrenzyBunnies::Context do
 
     describe 'loading workers' do
       context 'with worker_subdomain: Subdomain' do
-        let(:sub_ctx) {FrenzyBunnies::Context.new(workers_scope: 'Subdomain')}
+        let(:sub_ctx) {RadioactiveBunnies::Context.new(workers_scope: 'Subdomain')}
         it 'will add any workers with a class name beginning with Subdomain that have been required' do
           expect(sub_ctx.worker_classes_for_scope).to include Subdomain::RightNameWorker
         end

@@ -1,10 +1,10 @@
 $:<< File.expand_path('../lib', File.dirname(__FILE__))
 
 require 'rubygems'
-require 'frenzy_bunnies'
+require 'radioactive_bunnies'
 
 class FeedWorker
-  include FrenzyBunnies::Worker
+  include RadioactiveBunnies::Worker
   from_queue 'new.feeds', :prefetch => 20, :threads => 13, :durable => true
 
   def work(msg)
@@ -14,7 +14,7 @@ class FeedWorker
 end
 
 class FeedDownloader
-  include FrenzyBunnies::Worker
+  include RadioactiveBunnies::Worker
   from_queue 'new.downloads', :durable => true
   def work(msg)
     puts msg
@@ -22,7 +22,7 @@ class FeedDownloader
   end
 end
 
-f = FrenzyBunnies::Context.new
+f = RadioactiveBunnies::Context.new
 
 f.run FeedWorker,FeedDownloader
 

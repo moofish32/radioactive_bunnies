@@ -1,7 +1,7 @@
-require 'frenzy_bunnies'
+require 'radioactive_bunnies'
 module Subdomain
   class RightNameWorker
-    include FrenzyBunnies::Worker
+    include RadioactiveBunnies::Worker
     from_queue 'dummy.worker'
     def work(metadata, msg)
       true

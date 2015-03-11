@@ -1,7 +1,7 @@
 require 'atomic'
-require 'frenzy_bunnies/context'
+require 'radioactive_bunnies/context'
 
-module FrenzyBunnies::Worker
+module RadioactiveBunnies::Worker
 
   def ack!
     true
@@ -12,7 +12,7 @@ module FrenzyBunnies::Worker
 
   def self.included(base)
     base.extend ClassMethods
-    FrenzyBunnies::Context.add_worker(base)
+    RadioactiveBunnies::Context.add_worker(base)
   end
 
   module ClassMethods

@@ -2,11 +2,11 @@ require 'thor'
 
 require 'ruby-debug'
 
-class FrenzyBunnies::CLI < Thor
+class RadioactiveBunnies::CLI < Thor
   BUNNIES =<<-EOF
 
     (\\___/)
-    (='.'=)  Frenzy Bunnies!
+    (='.'=)  Radioactive Bunnies!
     (")_(")  JRuby based workers on top of march_hare
 
   EOF
@@ -17,12 +17,12 @@ class FrenzyBunnies::CLI < Thor
     require workerfile
     # enumerate all workers
     workers = []
-    ObjectSpace.each_object(Class){|o| workers << o if o.ancestors.map(&:name).include? "FrenzyBunnies::Worker"}
+    ObjectSpace.each_object(Class){|o| workers << o if o.ancestors.map(&:name).include? "RadioactiveBunnies::Worker"}
     workers.uniq!
 
     puts BUNNIES
 
-    c = FrenzyBunnies::Context.new(enable_web_stats: true)
+    c = RadioactiveBunnies::Context.new(enable_web_stats: true)
     debugger
     c.logger.info "Discovered #{workers.inspect}"
     c.run *workers

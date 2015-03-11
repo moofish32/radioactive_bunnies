@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
-require File.expand_path('../lib/frenzy_bunnies/version', __FILE__)
+require File.expand_path('../lib/radioactive_bunnies/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["Dotan Nahum"]
-  gem.email         = ["jondotan@gmail.com"]
+  gem.authors       = ["Michael Cowgill", "Bryan Konowitz"]
+  gem.email         = ["moofish32@gmail.com", "bryan@konowitz.me"]
   gem.description   = %q{RabbitMQ JRuby based workers on top of march_hare}
   gem.summary       = %q{RabbitMQ JRuby based workers on top of march_hare}
   gem.homepage      = ""
@@ -11,9 +11,9 @@ Gem::Specification.new do |gem|
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
-  gem.name          = "frenzy_bunnies"
+  gem.name          = "radioactive_bunnies"
   gem.require_paths = ["lib"]
-  gem.version       = FrenzyBunnies::VERSION
+  gem.version       = RadioactiveBunnies::VERSION
   
   gem.add_dependency 'march_hare', '~> 2.8'
   gem.add_dependency 'thor'
