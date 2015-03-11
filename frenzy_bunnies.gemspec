@@ -22,6 +22,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'json'
   gem.add_dependency 'thread_safe'
 
+  gem.add_development_dependency 'gem-release'
   gem.add_development_dependency 'guard-coffeescript'
   gem.add_development_dependency 'rspec', '~>3.0'
   gem.add_development_dependency 'guard-rspec'
