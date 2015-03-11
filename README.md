@@ -1,4 +1,21 @@
-# FrenzyBunnies
+# Radioactive Bunnies
+
+This is a fork off the excellent baseline library frenzy_bunnies provided by
+@jondot. Our intent is to use this as the underlying library for a new service
+framework enabling lightweight ruby microservices. The following has been
+changed to support this:
+
+- Worker#work receives both metadata and payload, straight from march_hare
+
+- Workers & Contexts support selecting their exchange via a nested hash of opts
+
+- Tests have been moved to rspec and are all IT (requiring a rabbitmq server)
+
+- Context is aware of all worker descendants via an included hook
+
+More changes to come, including cleaning up the rest of the README.
+
+## Original Introduction
 
 A lightweight background workers library based on JRuby and the very efficient `march_hare` RabbitMQ driver for very fast and
 efficient processing.
