@@ -47,15 +47,16 @@ class FrenzyBunnies::Context
   end
 
   def stop
-    return if @connection.closed?
+    return if (@connection.nil? || @connection.closed?)
     @logger.info 'Shutting down workers and closing connection'
     stop_workers
     @connection.close
   end
 
   def stop_workers
+    return unless !!@workers
     @logger.info 'Stopping workers'
-    @workers.each{|klass| klass.stop } unless @workers.empty?
+    @workers.each{|klass| klass.stop }
     @logger.info 'Workers have been told to stop'
   end
 
