@@ -22,8 +22,8 @@ class FrenzyBunnies::CLI < Thor
 
     puts BUNNIES
 
+    c = FrenzyBunnies::Context.new(enable_web_stats: true)
     debugger
-    c = FrenzyBunnies::Context.new
     c.logger.info "Discovered #{workers.inspect}"
     c.run *workers
     Signal.trap('INT') { c.stop; exit! }

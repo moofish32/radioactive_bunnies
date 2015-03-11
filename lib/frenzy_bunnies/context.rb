@@ -4,13 +4,13 @@ require 'thread_safe'
 
 class FrenzyBunnies::Context
   attr_reader :queue_factory, :opts, :connection, :workers
-  OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :logger,
+  OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :log_with,
           :username, :password, :exchange, :workers_scope]
 
   EXCHANGE_DEFAULTS = {name: 'frenzy_bunnies', type: :direct, durable: false}.freeze
   CONFIG_DEFAULTS = { host: 'localhost', heartbeat: 5, web_host: 'localhost', web_port: 11333,
-    disable_web_stats: true, web_threadfilter: /^pool-.*/, env: 'development',
-    logger: Logger.new(nil), exchange: EXCHANGE_DEFAULTS
+    enable_web_stats: false, web_threadfilter: /^pool-.*/, env: 'development',
+    exchange: EXCHANGE_DEFAULTS
   }.freeze
 
   @@known_workers = ThreadSafe::Hash.new
@@ -21,6 +21,10 @@ class FrenzyBunnies::Context
     end
   end
 
+  def logger
+    @logger ||= Logger.new(STDOUT)
+  end
+
   def self.add_worker(wrk_class)
     @@known_workers[wrk_class.name] = wrk_class
   end
@@ -28,7 +32,7 @@ class FrenzyBunnies::Context
   def initialize(opts = {})
     @opts = CONFIG_DEFAULTS.merge(opts)
     @env = @opts[:env]
-    @logger = @opts[:logger]
+    @logger = @opts[:log_with]
   end
 
   def default_exchange
@@ -69,7 +73,7 @@ class FrenzyBunnies::Context
   private
 
   def start_web_console
-    return nil if @opts[:disable_web_stats]
+    return nil unless @opts[:enable_web_stats]
     Thread.new do
       FrenzyBunnies::Web.run_with(@workers, :host => @opts[:web_host], port: @opts[:web_port],
                                   threadfilter: @opts[:web_threadfilter], logger: @logger)

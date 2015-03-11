@@ -26,7 +26,7 @@ module FrenzyBunnies::Worker
       @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
       @working_since = Time.now
 
-      @logger = context.opts[:logger]
+      @logger = context.logger
 
       @queue_opts[:prefetch] ||= 10
       @queue_opts[:durable] ||= false
