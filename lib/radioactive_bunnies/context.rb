@@ -4,7 +4,7 @@ require 'thread_safe'
 
 class RadioactiveBunnies::Context
   attr_reader :queue_factory, :opts, :connection, :workers
-  OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env, :log_with,
+  OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env,
           :username, :password, :exchange, :workers_scope]
 
   EXCHANGE_DEFAULTS = {name: 'frenzy_bunnies', type: :direct, durable: false}.freeze
@@ -23,6 +23,11 @@ class RadioactiveBunnies::Context
 
   def logger
     @logger ||= Logger.new(STDOUT)
+  end
+
+  def log_with good_logger
+    @opts[:log_with] = good_logger
+    @logger = good_logger
   end
 
   def self.add_worker(wrk_class)
