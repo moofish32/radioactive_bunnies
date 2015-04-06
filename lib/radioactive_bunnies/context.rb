@@ -4,7 +4,7 @@ require 'thread_safe'
 
 class RadioactiveBunnies::Context
   attr_reader :queue_factory, :opts, :connection, :workers
-  OPTS = [:host, :heartbeat, :web_host, :web_port, :web_threadfilter, :env,
+  OPTS = [:uri, :host, :vhost, :heartbeat, :web_host, :web_port, :web_threadfilter, :env,
           :username, :password, :exchange, :workers_scope]
 
   EXCHANGE_DEFAULTS = {name: 'frenzy_bunnies', type: :direct, durable: false}.freeze
@@ -75,6 +75,20 @@ class RadioactiveBunnies::Context
     @@known_workers.select{ |klass_name, cls| klass_name.start_with? worker_scope}.values
   end
 
+  def rabbit_params
+    params = { :heartbeat_interval => @opts[:heartbeat]}
+    if !!@opts[:uri]
+      params[:uri] = @opts[:uri] if @opts[:uri]
+    else
+      params[:host] = @opts[:host] if @opts[:host]
+      params[:username] = @opts[:username] if @opts[:username]
+      params[:password] = @opts[:password] if @opts[:password]
+      params[:port] = @opts[:port] if @opts[:port]
+      params[:vhost] = @opt[:vhost] if @opts[:vhost]
+    end
+    params
+  end
+
   private
 
   def start_web_console
@@ -95,12 +109,6 @@ class RadioactiveBunnies::Context
     end
   end
 
-  def rabbit_params
-    params = {:host => @opts[:host], :heartbeat_interval => @opts[:heartbeat]}
-    (params[:username], params[:password] = @opts[:username], @opts[:password]) if @opts[:username] && @opts[:password]
-    (params[:port] = @opts[:port]) if @opts[:port]
-    params
-  end
 
 end
 

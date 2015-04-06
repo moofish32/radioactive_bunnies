@@ -32,6 +32,15 @@ describe RadioactiveBunnies::Context do
         ctx.reset_to_default_config
         expect(ctx.opts[:web_host]).to eql 'localhost'
       end
+
+      it '#uri overides rabbit connection params host, vhost, port, username and password' do
+        uri = 'amqp://guest:guest@localhost:5672/%2F'
+        host = 'foo'
+        ctx.uri uri
+        ctx.host host
+        expect(ctx.rabbit_params).to include(uri: uri)
+        expect(ctx.rabbit_params).not_to include(host: host)
+      end
     end
 
     describe 'loading workers' do
