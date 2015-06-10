@@ -53,17 +53,17 @@ module RadioactiveBunnies::Worker
             else
               metadata.reject
               incr! :failed
-              error "REJECTED", payload
+              error "REJECTED", metadata
             end
           end
         rescue Timeout::Error
           metadata.reject
           incr! :failed
-          error "TIMEOUT #{@queue_opts[:timeout_job_after]}s", payload
+          error "TIMEOUT #{@queue_opts[:timeout_job_after]}s", metadata
         rescue
           metadata.reject
           incr! :failed
-          error "ERROR #{$!}", payload
+          error "ERROR #{$!}", metadata
         end
       end
 
