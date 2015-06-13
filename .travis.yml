@@ -5,6 +5,6 @@ rvm:
 jdk:
   - oraclejdk7
   - oraclejdk8
-  - openjdk8
+  - openjdk7
 services:
   - rabbitmq
