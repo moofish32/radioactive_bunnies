@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/moofish32/radioactive_bunnies.svg?branch=master)](https://travis-ci.org/moofish32/radioactive_bunnies)
+[![Test Coverage](https://codeclimate.com/github/moofish32/radioactive_bunnies/badges/coverage.svg)](https://codeclimate.com/github/moofish32/radioactive_bunnies/coverage)
 # Radioactive Bunnies
 
 This is a fork off the excellent baseline library frenzy_bunnies provided by
