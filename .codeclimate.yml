@@ -4,3 +4,6 @@ languages:
   Coffee: true
 exclude_paths:
 - "lib/**/*.js"
+- "examples/*"
+- "spec/*"
+- "coverage/*"
