@@ -1,7 +1,7 @@
 require 'logger'
 require 'radioactive_bunnies/web'
 require 'thread_safe'
-
+require 'radioactive_bunnies/ext/util'
 class RadioactiveBunnies::Context
   attr_reader :queue_factory, :opts, :connection, :workers
   OPTS = [:uri, :host, :vhost, :heartbeat, :web_host, :web_port, :web_threadfilter, :env,
@@ -13,7 +13,7 @@ class RadioactiveBunnies::Context
     exchange: EXCHANGE_DEFAULTS
   }.freeze
 
-  @@known_workers = ThreadSafe::Hash.new
+  @@known_workers = ThreadSafe::Array.new
 
   OPTS.each do |option|
     define_method option do |value|
@@ -31,7 +31,7 @@ class RadioactiveBunnies::Context
   end
 
   def self.add_worker(wrk_class)
-    @@known_workers[wrk_class.name] = wrk_class
+    @@known_workers << wrk_class.name
   end
 
   def initialize(opts = {})
@@ -72,7 +72,9 @@ class RadioactiveBunnies::Context
   def worker_classes_for_scope
     worker_scope = @opts[:workers_scope]
     return [] if worker_scope.to_s.empty?
-    @@known_workers.select{ |klass_name, cls| klass_name.start_with? worker_scope}.values
+    @@known_workers.map do |klass_name|
+      RadioactiveBunnies::Ext::Util.constantize!(klass_name) if klass_name.start_with? worker_scope
+    end
   end
 
   def rabbit_params
