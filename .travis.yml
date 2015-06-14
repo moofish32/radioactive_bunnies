@@ -1,10 +1,13 @@
 language: ruby
 rvm:
-  - jruby-19mode
-  - jruby-head
+- jruby-19mode
+- jruby-head
 jdk:
-  - oraclejdk7
-  - oraclejdk8
-  - openjdk7
+- oraclejdk7
+- oraclejdk8
+- openjdk7
 services:
-  - rabbitmq
+- rabbitmq
+env:
+  matrix:
+    secure: AY3DsrPdsC8EQxGIGUHlvXeJNoPbsxESP7EXaDGTEFc8dHrWhdafOHwXFfERLFg8eAub1/qu01tjdcJcGf1OhdN3gM0Aic+EERknI/HD/6ZZifDKC6GDRv6F1uoKMzQmjuaZBzOjiaFTV3bZcp2pM3f7dO3LEfdKwXcZMRQ++YWYL+ntZbUPzvZ8K6/UGP3lvFF5jRpv2kDryFJa4pauZ6CnAdYFEnJB/8cB9IXJ5H+YzM7wGNl6gMJ7RPtdBV1BoeHkhBVHf2BEoHKAZXfL0FlCAGemQfAUH9eR+pdMD1RXoFZrbiQqiNIJdjufwMdyIRHIA7xc17QwR0uqjd/YJwh5g/n1sSFcC8DrKTlR+iZiPtbgF4ZITTaGteSTkRKu9v9UooMVUOsAmSbWlvXXXdTzSlo1KA3pgfnSxGy3M4osOTxO6TwL8+XJE4bmjgEgFJnUgHcGCargv9FIfZfIn8OVYiMnHd3Ab7hjej8aiPVByM9mf58UnfOd4GEmhG1VX6U3A+k57qWpm4DpxrRX1fpwek1ZNfEmuaWlBiuIxrkz5BloFUMGwGZPOI+GzJsR+zAEYhpJxAyNkB/s7PtQkl5VsIpP4UA1G5k/Qz4Aonw1fekzoIJgF1oiRqkegIwZG8luMq10uJXGLwUIlSuvKhzgyHd1IPlP6wt6HU3r+Nc=
