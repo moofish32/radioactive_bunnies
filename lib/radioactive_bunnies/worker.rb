@@ -23,27 +23,11 @@ module RadioactiveBunnies::Worker
     end
 
     def start(context)
-      @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
-      @working_since = Time.now
+      @context = context
+      startup_init
+      @queue = build_queue
 
-      @logger = context.logger
-
-      @queue_opts[:prefetch] ||= 10
-      @queue_opts[:durable] ||= false
-      @queue_opts[:timeout_job_after] ||=5
-
-      if @queue_opts[:threads]
-        @thread_pool = MarchHare::ThreadPools.fixed_of_size(@queue_opts[:threads])
-      else
-        @thread_pool = MarchHare::ThreadPools.dynamically_growing
-      end
-
-      @queue_name = "#{@queue_name}_#{context.opts[:env]}" if @queue_opts[:append_env]
-      q = context.queue_factory.build_queue(@queue_name, @queue_opts)
-
-      say "#{@queue_opts[:threads] ? "#{@queue_opts[:threads]} threads " : ''}with #{@queue_opts[:prefetch]} prefetch on <#{@queue_name}>."
-
-      q.subscribe(:ack => true, :blocking => false, :executor => @thread_pool) do |metadata, payload|
+      @queue.subscribe(:ack => true, :blocking => false, :executor => @thread_pool) do |metadata, payload|
         wkr = new
         begin
           Timeout::timeout(@queue_opts[:timeout_job_after]) do
@@ -66,7 +50,6 @@ module RadioactiveBunnies::Worker
           error "ERROR #{$!}", metadata
         end
       end
-
       say "workers up."
     end
 
@@ -93,7 +76,39 @@ module RadioactiveBunnies::Worker
     def jobs_stats
       Hash[ @jobs_stats.map{ |k,v| [k, v.value] } ].merge({ :since => @working_since.to_i })
     end
-  private
+
+    private
+
+    def startup_init
+      @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
+      @working_since = Time.now
+      @queue_opts[:exchange] ||= @context.default_exchange
+      @logger = @context.logger
+      set_thread_pool
+    end
+
+    def set_thread_pool
+      if @queue_opts[:threads]
+        @thread_pool = MarchHare::ThreadPools.fixed_of_size(@queue_opts[:threads])
+      else
+        @thread_pool = MarchHare::ThreadPools.dynamically_growing
+      end
+    end
+
+    def build_queue
+      @queue_name = "#{@queue_name}_#{@context.opts[:env]}" if @queue_opts[:append_env]
+      q = @context.queue_factory.build_queue(@queue_name, @queue_opts)
+      say queue_description
+      q
+    end
+
+    def queue_description
+      @description ||= begin
+        desc = (@queue_opts[:threads] && "#{@queue_opts[:threads]} threads ") || ''
+        desc += "with #{@queue_opts[:prefetch]} prefetch on <#{@queue_name}>."
+      end
+    end
+
     def say(text)
       @logger.info "[#{self.name}] #{text}"
     end
@@ -107,4 +122,3 @@ module RadioactiveBunnies::Worker
     end
   end
 end
-

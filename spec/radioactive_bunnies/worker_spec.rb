@@ -36,7 +36,7 @@ describe RadioactiveBunnies::Worker do
     expect(CustomWorker.jobs_stats[:failed]).to eql 0
     expect(CustomWorker.jobs_stats[:passed]).to eql 0
     expect(CustomWorker.queue_opts).
-      to match({:prefetch => 20, :durable => true, :timeout_job_after => 13, :threads => 25,
+      to include({:prefetch => 20, :durable => true, :timeout_job_after => 13, :threads => 25,
                 append_env: true})
   end
 
@@ -64,8 +64,8 @@ describe RadioactiveBunnies::Worker do
   end
 
   it "should acknowledge a unit of work when worker succeeds" do
-    expect(DummyWorker.jobs_stats[:passed]).to eql 1
     expect(DummyWorker.jobs_stats[:failed]).to eql 0
+    expect(DummyWorker.jobs_stats[:passed]).to eql 1
   end
 
   it "does not acknowledge failed work and tracks failures" do
