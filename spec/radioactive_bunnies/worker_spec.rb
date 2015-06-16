@@ -4,6 +4,7 @@ require 'support/workers/timeout_worker'
 require 'support/workers/exception_worker'
 require 'support/workers/dummy_worker'
 require 'support/workers/failed_worker'
+require 'support/workers/deadletter_worker'
 
 class CustomWorker
   include RadioactiveBunnies::Worker
@@ -81,5 +82,12 @@ describe RadioactiveBunnies::Worker do
   it "should reject a unit of work when worker fails exceptionally" do
     expect(ExceptionWorker.jobs_stats[:failed]).to eql 1
     expect(ExceptionWorker.jobs_stats[:passed]).to eql 0
+  end
+
+  context "with the deadletter option set to a worker class name" do
+    it 'raises an error if the class does not exist when the worker starts' do
+
+
+    end
   end
 end
