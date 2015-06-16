@@ -1,6 +1,6 @@
 require 'atomic'
 require 'radioactive_bunnies/context'
-
+require 'radioactive_bunnies/deadletter_worker'
 module RadioactiveBunnies::Worker
 
   def ack!
@@ -12,6 +12,7 @@ module RadioactiveBunnies::Worker
 
   def self.included(base)
     base.extend ClassMethods
+    base.extend RadioactiveBunnies::DeadletterWorker
     RadioactiveBunnies::Context.add_worker(base)
   end
 
@@ -77,14 +78,19 @@ module RadioactiveBunnies::Worker
       Hash[ @jobs_stats.map{ |k,v| [k, v.value] } ].merge({ :since => @working_since.to_i })
     end
 
+    def validate_worker!
+
+    end
+
     private
 
     def startup_init
-      @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
       @working_since = Time.now
+      @jobs_stats = { :failed => Atomic.new(0), :passed => Atomic.new(0) }
       @queue_opts[:exchange] ||= @context.default_exchange
       @logger = @context.logger
       set_thread_pool
+      deadletter_init(@queue_opts)
     end
 
     def set_thread_pool

@@ -21,12 +21,18 @@ class RadioactiveBunnies::QueueFactory
 
   private
 
-  def create_and_bind_queue(channel, exchange, name, options)
-    routing_key = options[:routing_key] || name
-    durable = options[:durable]
-    queue = channel.queue(name, :durable => durable )
+  def create_and_bind_queue(channel, exchange, name, q_opts)
+    routing_key = q_opts[:routing_key] || name
+    q_params = queue_params(q_opts)
+    puts q_params.inspect
+    queue = channel.queue(name, queue_params(q_opts))
     queue.bind(exchange, :routing_key => routing_key)
     queue
+  end
+
+  def queue_params(q_opts)
+    opts = {durable: q_opts[:durable]}
+    opts.merge(RadioactiveBunnies::DeadletterWorker.deadletter_queue_config(q_opts))
   end
 
   def create_exchange(channel, q_opts)
