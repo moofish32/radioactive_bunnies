@@ -19,7 +19,7 @@ class DeadletterDefaultWorkerTwo
     exchange: {type: :fanout, name: nil}
 
   def work(metadata, msg)
-    true
+    ack!
   end
 end
 
